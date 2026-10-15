@@ -1,0 +1,634 @@
+# Complete Step-by-Step Guide: Java Maven + GitHub + Jenkins
+
+Follow these steps in order in your Ubuntu VirtualBox terminal. We'll create the Maven project from scratch, demonstrate Java String immutability and file copying, push the project to GitHub, and automate the build with Jenkins.
+
+## Step 1: Install Java, Maven, and Git
+
+Open your Ubuntu terminal and run:
+
+```
+sudo apt update
+sudo apt install openjdk-21-jdk maven git -y
+```
+
+Verify the installations:
+
+```
+java -version
+mvn -version
+git --version
+```
+
+## Step 2: Create a Maven project
+
+Create the project directory:
+
+```
+mkdir -p ~/lab
+cd ~/lab
+```
+
+Generate the Maven project:
+
+```
+mvn archetype:generate \
+  -DgroupId=com.example \
+  -DartifactId=mavenapp \
+  -DarchetypeArtifactId=maven-archetype-quickstart \
+  -DarchetypeVersion=1.5 \
+  -DinteractiveMode=false
+```
+
+Enter the project:
+
+```
+cd ~/lab/mavenapp
+```
+
+Check the files:
+
+```
+ls -la
+```
+
+You should see:
+
+```
+pom.xml
+src/
+```
+
+The Java source directory will be:
+
+```
+src/main/java/com/example/App.java
+```
+
+The test directory will be:
+
+```
+src/test/java/com/example/AppTest.java
+```
+
+## Step 3: Configure `pom.xml`
+
+Run:
+
+```
+cd ~/lab/mavenapp
+nano pom.xml
+```
+
+Delete the existing contents and paste:
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>mavenapp</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>mavenapp</name>
+    <description>Java String Immutability and File Copy Demonstration</description>
+
+    <properties>
+        <maven.compiler.release>11</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.11.0</junit.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>11</release>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.3.0</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.example.App</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+
+Save using `Ctrl+O`, press `Enter`, and exit with `Ctrl+X`.
+
+## Step 4: Create the Java program
+
+Run:
+
+```
+nano src/main/java/com/example/App.java
+```
+
+Paste:
+
+```
+package com.example;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+
+public class App {
+
+    public static void main(String[] args) {
+
+        // Demonstrate String immutability
+        System.out.println("=== String Immutability ===");
+
+        String original = "Hello";
+        String modified = original.concat(" World");
+
+        System.out.println("Original: " + original);
+        System.out.println("Modified: " + modified);
+
+        // Demonstrate file copying
+        System.out.println("\n=== File Copying ===");
+
+        File source = new File("source.txt");
+        File destination = new File("dest.txt");
+
+        try {
+            if (!source.isFile()) {
+                throw new IOException("source.txt not found");
+            }
+
+            Files.copy(
+                source.toPath(),
+                destination.toPath(),
+                StandardCopyOption.REPLACE_EXISTING
+            );
+
+            System.out.println("File copied successfully.");
+
+        } catch (IOException e) {
+            System.err.println("Copy failed: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+}
+```
+
+Save and exit.
+
+## Step 5: Create the source text file
+
+Run:
+
+```
+cat > source.txt <<'EOF'
+This file demonstrates Java file copying.
+Maven project with Jenkins pipeline.
+EOF
+```
+
+Verify:
+
+```
+cat source.txt
+```
+
+## Step 6: Create a JUnit test
+
+Run:
+
+```
+nano src/test/java/com/example/AppTest.java
+```
+
+Replace its contents with:
+
+```
+package com.example;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+class AppTest {
+
+    @Test
+    void stringShouldRemainUnchanged() {
+        String original = "Hello";
+        String modified = original.concat(" World");
+
+        assertEquals("Hello", original);
+        assertEquals("Hello World", modified);
+    }
+}
+```
+
+Save and exit.
+
+## Step 7: Create `.gitignore`
+
+Run:
+
+```
+cat > .gitignore <<'EOF'
+target/
+dest.txt
+*.log
+EOF
+```
+
+## Step 8: Build and run the project
+
+Build:
+
+```
+mvn clean package
+```
+
+Run the application:
+
+```
+java -jar target/mavenapp-1.0-SNAPSHOT.jar
+```
+
+Expected output:
+
+```
+=== String Immutability ===
+Original: Hello
+Modified: Hello World
+
+=== File Copying ===
+File copied successfully.
+```
+
+Verify the destination file:
+
+```
+cat dest.txt
+```
+
+Compare the files:
+
+```
+diff source.txt dest.txt
+```
+
+No output from `diff` means the files match.
+
+## Step 9: Configure Git
+
+Set your Git identity. Replace the example values:
+
+```
+git config --global user.name "Your Name"
+git config --global user.email "your-email@example.com"
+```
+
+Initialize Git:
+
+```
+cd ~/lab/mavenapp
+git init
+git branch -M main
+```
+
+Add the files:
+
+```
+git add .
+```
+
+Check the staged files:
+
+```
+git status
+```
+
+Commit:
+
+```
+git commit -m "Create Java Maven string and file copy project"
+```
+
+## Step 10: Create a GitHub repository
+
+1. Open https://github.com/new
+2. Enter repository name: `mavenapp`
+3. Choose Public or Private.
+4. Leave **Add a README**, `.gitignore`, and license unselected.
+5. Click **Create repository**.
+
+Connect your local project to GitHub. Replace `YOUR_GITHUB_USERNAME` with your actual GitHub username:
+
+```
+cd ~/lab/mavenapp
+
+git remote add origin https://github.com/YOUR_GITHUB_USERNAME/mavenapp.git
+
+git push -u origin main
+```
+
+If GitHub requests authentication, use a supported method such as a personal access token or SSH key.
+
+Verify your repository in the browser:
+
+```
+https://github.com/YOUR_GITHUB_USERNAME/mavenapp
+```
+
+## Step 11: Create the Jenkins pipeline file
+
+Run:
+
+```
+cd ~/lab/mavenapp
+nano Jenkinsfile
+```
+
+Paste:
+
+```
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Repository checked out by Jenkins.'
+            }
+        }
+
+        stage('Build and Test') {
+            steps {
+                sh 'mvn -B clean package'
+            }
+        }
+
+        stage('Run Application') {
+            steps {
+                sh 'java -jar target/mavenapp-1.0-SNAPSHOT.jar'
+            }
+        }
+
+        stage('Verify File Copy') {
+            steps {
+                sh 'test -f source.txt'
+                sh 'test -f dest.txt'
+                sh 'diff -u source.txt dest.txt'
+                echo 'Source and destination files match.'
+            }
+        }
+    }
+
+    post {
+        success {
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            echo 'Pipeline completed successfully.'
+        }
+
+        failure {
+            echo 'Pipeline failed. Check Console Output.'
+        }
+    }
+}
+```
+
+Save and exit.
+
+Commit and push the pipeline:
+
+```
+git add Jenkinsfile
+git commit -m "Add Jenkins pipeline"
+git push origin main
+```
+
+## Step 12: Install Jenkins
+
+Install Java and required tools if you have not already done so:
+
+```
+sudo apt update
+sudo apt install fontconfig openjdk-21-jdk git maven wget -y
+```
+
+Add the official Jenkins repository:
+
+```
+sudo mkdir -p /etc/apt/keyrings
+```
+
+```
+sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+```
+
+```
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" \
+| sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+```
+
+Install Jenkins:
+
+```
+sudo apt update
+sudo apt install jenkins -y
+```
+
+Start Jenkins:
+
+```
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+```
+
+Check its status:
+
+```
+sudo systemctl status jenkins --no-pager
+```
+
+Retrieve the initial administrator password:
+
+```
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+```
+
+Open Jenkins in your Ubuntu browser:
+
+http://localhost:8080
+
+1. Enter the initial administrator password.
+2. Click **Install suggested plugins**.
+3. Create your administrator account.
+4. Complete the setup.
+
+## Step 13: Verify Jenkins tools
+
+Run:
+
+```
+java -version
+mvn -version
+git --version
+```
+
+Check that the Jenkins user can access them:
+
+```
+sudo -u jenkins java -version
+sudo -u jenkins mvn -version
+sudo -u jenkins git --version
+```
+
+## Step 14: Create a Jenkins pipeline job
+
+Open:
+
+http://localhost:8080
+
+Follow these steps:
+
+1. Click **New Item**.
+2. Enter the name `Maven-Immutable-String-File-Copy`.
+3. Select **Pipeline**.
+4. Click **OK**.
+5. Find the **Pipeline** section.
+6. Set **Definition** to `Pipeline script from SCM`.
+7. Set **SCM** to `Git`.
+8. Enter your repository URL:
+
+```
+   https://github.com/YOUR_GITHUB_USERNAME/mavenapp.git
+```
+
+9. Set **Branch Specifier** to:
+
+```
+   */main
+```
+
+10. Set **Script Path** to:
+
+```
+    Jenkinsfile
+```
+
+11. For a public repository, leave credentials as none.
+12. Click **Save**.
+
+## Step 15: Run the Jenkins pipeline
+
+1. Open your pipeline job.
+2. Click **Build Now**.
+3. Click the build number.
+4. Select **Console Output**.
+5. Verify that the build succeeds.
+
+Expected results include:
+
+```
+[INFO] BUILD SUCCESS
+```
+
+```
+Original: Hello
+Modified: Hello World
+```
+
+```
+File copied successfully.
+```
+
+```
+Source and destination files match.
+```
+
+The build should finish successfully, and Jenkins should archive the JAR file.
+
+## Step 16: Test a GitHub update
+
+Return to your terminal:
+
+```
+cd ~/lab/mavenapp
+```
+
+Update the source file:
+
+```
+cat > source.txt <<'EOF'
+This file demonstrates Java file copying.
+Maven project with Jenkins pipeline.
+Updated using GitHub and Jenkins.
+EOF
+```
+
+Commit and push:
+
+```
+git add source.txt
+git commit -m "Update source file"
+git push origin main
+```
+
+Open Jenkins and click **Build Now** again.
+
+Open **Console Output** and confirm that the build succeeds and the destination file matches the updated source file.
+
+### Final project checklist
+
+- [ ]Maven project created.
+- [ ]Java String immutability demonstrated.
+- [ ]Source file copied to destination file.
+- [ ]Maven build and JUnit test successful.
+- [ ]Git repository initialized.
+- [ ]Project uploaded to GitHub.
+- [ ]Jenkins installed and configured.
+- [ ]Jenkins pipeline executed successfully.
+- [ ]Updated GitHub code tested through Jenkins.
